@@ -19,7 +19,7 @@ def cli_commands():
     pass
 
 
-# from commands.farms import *
+from commands.farms import *
 from commands.fields import *
 # from commands.backend import *
 
@@ -182,5 +182,5 @@ def get_orders():
 
 
 if __name__ == '__main__':
-    entry = click.CommandCollection(sources=[cli_commands, entry_fields])
+    entry = click.CommandCollection(sources=[cli_commands, entry_fields, entry_farms])
     entry()
