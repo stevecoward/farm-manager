@@ -1,0 +1,11 @@
+click
+delorean
+delorean
+fastapi
+peewee
+pydantic
+requests
+rich
+starlette
+starlette
+uvicorn
