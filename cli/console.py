@@ -27,15 +27,13 @@ from commands.fields import *
 @cli_commands.command()
 def fields_by_farm() -> None:
     response = runner.call('/farms', 'GET', 400, 'could not retrieve farms')    
-    if response:
-        FarmsTable(response.json(), print=True)
+    FarmsTable(response.json(), print=True)
+    
     chosen_farm_id = input('Select a farm ID: ')
     print('')
     if len([item for item in response.json() if item['id'] == int(chosen_farm_id)]) > 0: # type: ignore
-        response = runner.call(f'/farms/{chosen_farm_id}/fields', 'GET', 400, 'could not retrive fields for farm')    
-        if response:        
-            FarmFieldsTable(response.json(), print=True)
-            # EmptyResponseTable({'message': 'test message'}, 'bold yellow', True)
+        response = runner.call(f'/farms/{chosen_farm_id}/fields', 'GET', 400, 'could not retrive fields for farm')          
+        FarmFieldsTable(response.json(), print=True)
 
 
 @cli_commands.command()
@@ -52,8 +50,7 @@ def create_worker(name: str, role: str) -> None:
     
 
     response = runner.call('/farms', 'GET', 400, 'could not retrieve farms')    
-    if response:
-        FarmsTable(response.json(), print=True)
+    FarmsTable(response.json(), print=True)
 
     chosen_farm_id = input('Select a farm ID: ')
     print('')
@@ -68,20 +65,13 @@ def create_worker(name: str, role: str) -> None:
             submitted_changes = {key:value for (key,value) in payload.items() if value is not None}
             
             response = runner.call(f'/workers', 'POST', 500, 'could not create worker', submitted_changes)
-            if response and response.ok:
-                worker = response.json()
-                response = runner.call(f'/workers/{worker["id"]}/farm/{chosen_farm_id}/associate', 'POST', 500, 'failed to associate worker with farm')
-                if not response or not response.ok:
-                    return
-                
-                response = runner.call(f'/workers/{worker["id"]}', 'GET', 400, 'could not retrieve worker')
-                if response and response.ok:
-                    WorkerFarmsTable(response.json(), print=True)
-            else:
-                # TODO: error checks
-                pass
+            worker = response.json()
+            runner.call(f'/workers/{worker["id"]}/farm/{chosen_farm_id}/associate', 'POST', 500, 'failed to associate worker with farm')
+            
+            response = runner.call(f'/workers/{worker["id"]}', 'GET', 400, 'could not retrieve worker')
+            WorkerFarmsTable(response.json(), print=True)
         else:
-            response = runner.call(f'/workers/{worker_id}/farm/{chosen_farm_id}/associate', 'POST', 500, 'failed to associate worker with farm')
+            runner.call(f'/workers/{worker_id}/farm/{chosen_farm_id}/associate', 'POST', 500, 'failed to associate worker with farm')
 
 
 @cli_commands.command()
@@ -125,8 +115,8 @@ def create_work_order():
         })
 
         work_order = json.loads(response.content) # type: ignore
-        response = runner.call(f'/orders/{work_order["id"]}/generate', 'POST', 500, 'error generating order assignments')
-        response = runner.call(f'/orders/{work_order["id"]}/plan', 'PUT', 500, 'error creating order plan')
+        runner.call(f'/orders/{work_order["id"]}/generate', 'POST', 500, 'error generating order assignments')
+        runner.call(f'/orders/{work_order["id"]}/plan', 'PUT', 500, 'error creating order plan')
 
 
 @cli_commands.command()
@@ -147,21 +137,12 @@ def get_assignments(prop: str, value: str, hide_completed: bool):
 @click.option('--assignment-id', '-a', type=int)
 def complete_assignment(assignment_id: int):
     resp_tasks = runner.call('/orders/tasks', 'GET', 400, 'unable to fetch tasks')
-    if not resp_tasks:
-        return
-    
     resp_assignment = runner.call(f'/assignments/{assignment_id}', 'GET', 400, 'failed to locate assignment')
-    if not resp_assignment:
-        return
-    
-    payload = {}
     response_obj = resp_assignment.json()
+    payload = {}
     if response_obj['task_id'] in [task['id'] for task in resp_tasks.json() if task['name'] in ['forage', 'harvest']]:
         assignment_yield = input('Enter the crop yield: ')    
-        resp_order = runner.call(f'/orders/{1}', 'GET', 400, 'failed to locate work order')
-        if not resp_order:
-            return
-        
+        resp_order = runner.call(f'/orders/{1}', 'GET', 400, 'failed to locate work order')        
         resp_obj_order = resp_order.json()
         field_id = resp_obj_order['field']['id']
         payload = {
@@ -169,10 +150,8 @@ def complete_assignment(assignment_id: int):
             'assignment_id': assignment_id,
             'amount_yield': assignment_yield
         }
-
-        response = runner.call(f'/fields/{field_id}/yield', 'POST', 500, 'Field not found', payload=payload)
-
-    response = runner.call(f'/assignments/{assignment_id}/complete', 'PUT', 500, 'Error completing assignment')
+        runner.call(f'/fields/{field_id}/yield', 'POST', 500, 'Field not found', payload=payload)
+    runner.call(f'/assignments/{assignment_id}/complete', 'PUT', 500, 'Error completing assignment')
 
 
 @cli_commands.command()
