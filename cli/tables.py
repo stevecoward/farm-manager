@@ -255,3 +255,23 @@ class WorkerAssignmentsTable(RichTable):
                     self.expand_month(item['month_assigned']),
                     '[bold green]Yes[/bold green]' if item['completed'] == True else '[bold]No[/bold]',
                 )
+
+
+class MapsTable(RichTable):
+    def __init__(self, data, header_style: str = 'bold white', print: bool = False):
+        super().__init__(data, header_style, print)
+    
+        if self.table:
+            self.table.add_column('#')
+            self.table.add_column('Name')
+            self.add_rows()
+            if self.print:
+                self.console.print(self.table)
+    
+    def add_rows(self):
+        if self.table:
+            for item in self.data:
+                self.table.add_row(
+                    str(item['id']),
+                    item['name'],
+                )

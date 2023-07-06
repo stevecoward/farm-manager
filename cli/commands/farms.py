@@ -1,7 +1,7 @@
 import click
 from typing import Union
 from requests.models import Response
-from tables import FarmsTable, FarmFieldsTable
+from tables import FarmsTable, FarmFieldsTable, MapsTable
 from console import runner, console
 
 
@@ -36,8 +36,15 @@ def get_farm_fields(farm_id: int) -> Union[Response, None]:
 @entry_farms.command()
 @click.option('--name', '-n', prompt='Farm Name')
 def create_farm(name: str):
+    response = runner.call('/maps', 'GET', 400, 'unable to fetch maps')
+    MapsTable(response.json(), print=True)
+    
+    chosen_map_id = input('Select a map ID: ')
+    print('')
+
     response = runner.call(f'/farms/', 'POST', 500, 'unable to create farm', {
-        'name': name
+        'name': name,
+        'map_id': chosen_map_id,
     })
     if response:
         FarmsTable(response.json(), print=True)

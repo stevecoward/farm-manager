@@ -12,6 +12,7 @@ from api.routes.fields import field_routes
 from api.routes.workers import worker_routes
 from api.routes.work_orders import work_order_routes
 from api.routes.work_assignments import work_assignment_routes
+from api.routes.maps import map_routes
 
 app.include_router(base_routes)
 app.include_router(farm_routes)
@@ -19,6 +20,7 @@ app.include_router(field_routes)
 app.include_router(worker_routes)
 app.include_router(work_order_routes)
 app.include_router(work_assignment_routes)
+app.include_router(map_routes)
 
 app.openapi_schema = get_openapi(
        title="FS22 Farm and Field Manager",

@@ -7,8 +7,13 @@ class GameConfig(BaseModel):
     days_in_month = IntegerField(null=False)
 
 
+class Maps(BaseModel):
+    name = CharField(unique=True)
+
+
 class Farms(BaseModel):
     name = CharField(unique=True)
+    map = ForeignKeyField(Maps, backref='farms')
 
 
 class Fields(BaseModel):
@@ -29,6 +34,7 @@ class CropCalendars(BaseModel):
     sow_end = IntegerField()
     harvest_start = IntegerField()
     harvest_end = IntegerField()
+    map = ForeignKeyField(Maps, backref='calendars')
 
 
 class Workers(BaseModel):

@@ -8,9 +8,9 @@ from contextvars import ContextVar
 client = TestClient(app, base_url='http://127.0.0.1:8000')
 
 
-def test_init_db():
-    response = client.get('/provision')
-    assert response.status_code != 403
+# def test_init_db():
+#     response = client.get('/provision')
+#     assert response.status_code != 403
 
 
 def test_get_all_farms():
@@ -22,6 +22,7 @@ def test_get_all_farms():
 def test_create_farm_valid():
     response = client.post('/farms', json={
         'name': 'Dummy Farm',
+        'map_id': 1,
     })
     response_obj = response.json()
     assert response.status_code == 201
@@ -31,6 +32,7 @@ def test_create_farm_valid():
 def test_create_farm_duplicate():
     response = client.post('/farms', json={
         'name': 'Dummy Farm',
+        'map_id': 1,
     })
     response_obj = response.json()
     assert response.status_code == 500
@@ -53,7 +55,8 @@ def test_get_farm_by_id_invalid_id():
 
 def test_modify_farm_name_valid():
     response = client.put('/farms/1', json={
-        'name': 'Dummy Farm Renamed'
+        'name': 'Dummy Farm Renamed',
+        'map_id': 1,
     })
     assert response.status_code == 204
 

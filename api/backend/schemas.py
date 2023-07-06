@@ -15,9 +15,21 @@ class PeeweeGetterDict(GetterDict):
         return res
 
 
+class BaseConfigModel(BaseModel):
+    class Config:
+        orm_mode = True
+        getter_dict = PeeweeGetterDict
+
+
+class Map(BaseConfigModel):
+    id: Optional[int]
+    name: Optional[str]
+
+
 class Farm(BaseModel):
     id: Optional[int]
     name: Optional[str]
+    map_id: Optional[int]
     class Config:
         orm_mode = True
         getter_dict = PeeweeGetterDict
