@@ -29,12 +29,15 @@ class Fields(BaseModel):
 
 
 class CropCalendars(BaseModel):
-    crop_name = CharField(unique=True, null=False)
+    crop_name = CharField(null=False)
     sow_start = IntegerField()
     sow_end = IntegerField()
     harvest_start = IntegerField()
     harvest_end = IntegerField()
     map = ForeignKeyField(Maps, backref='calendars')
+
+    class Meta:
+        indexes = ((('map', 'crop_name'), True),)
 
 
 class Workers(BaseModel):

@@ -65,7 +65,7 @@ class FieldOptional(BaseModel):
         getter_dict = PeeweeGetterDict
 
 
-class WorkTask(BaseModel):
+class WorkTask(BaseConfigModel):
     id: Optional[int]
     name: str
     category: str
@@ -173,3 +173,12 @@ class WorkerAssignmentOptional(BaseModel):
     class Config:
         orm_mode = True
         getter_dict = PeeweeGetterDict
+
+
+class CropCalendar(BaseConfigModel):
+    crop_name: str
+    sow_start: int
+    sow_end: int
+    harvest_start: int
+    harvest_end: int
+    map_id: int

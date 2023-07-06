@@ -1,4 +1,6 @@
+from typing import List
 from fastapi import APIRouter, HTTPException
+import starlette.status as status
 
 from tracker import route_prefix
 from api.backend import db
@@ -7,9 +9,10 @@ from api.backend.models import Workers, WorkerAssignments
 from api.backend.models import WorkerFarms, WorkTasks, WorkOrders
 from api.backend.models import GameConfig, CropCalendars, FieldYields
 from api.backend.models import Maps
+from api.backend.schemas import CropCalendar, WorkTask
 
 
-base_routes = APIRouter(prefix=route_prefix)
+base_routes = APIRouter(prefix=f'{route_prefix}/backend')
 
 
 @base_routes.get('/provision', include_in_schema=False)
@@ -24,117 +27,33 @@ def provision_db():
         )
 
 
-@base_routes.get('/init', include_in_schema=False)
-def initialize_db_data():
-    cropcalendars_data = [{
-        'crop_name': 'corn',
-        'sow_start': 4,
-        'sow_end': 5,
-        'harvest_start': 10,
-        'harvest_end': 11,
-    },{
-        'crop_name': 'canola',
-        'sow_start': 8,
-        'sow_end': 9,
-        'harvest_start': 7,
-        'harvest_end': 8,
-    },{
-        'crop_name': 'wheat',
-        'sow_start': 9,
-        'sow_end': 10,
-        'harvest_start': 7,
-        'harvest_end': 8,
-    },{
-        'crop_name': 'barley',
-        'sow_start': 9,
-        'sow_end': 10,
-        'harvest_start': 6,
-        'harvest_end': 7,
-    },{
-        'crop_name': 'soybeans',
-        'sow_start': 5,
-        'sow_end': 6,
-        'harvest_start': 10,
-        'harvest_end': 11,
-    },{
-        'crop_name': 'grass',
-        'sow_start': 3,
-        'sow_end': 11,
-        'harvest_start': 3,
-        'harvest_end': 11,
-    },{
-        'crop_name': 'sugar_beet',
-        'sow_start': 3,
-        'sow_end': 4,
-        'harvest_start': 10,
-        'harvest_end': 11,
-    },{
-        'crop_name': 'sugarcane',
-        'sow_start': 3,
-        'sow_end': 4,
-        'harvest_start': 10,
-        'harvest_end': 11,
-    },]
-    worktasks_data = [{
-        'name': 'spread 1st fertilizer',
-        'category': 'field',
-    },{
-        'name': 'till',
-        'category': 'field',
-    },{
-        'name': 'sow',
-        'category': 'field',
-    },{
-        'name': 'roll',
-        'category': 'field',
-    },{
-        'name': 'post sow weeding',
-        'category': 'field',
-    },{
-        'name': 'harvest',
-        'category': 'field',
-    },{
-        'name': 'spread lime',
-        'category': 'field',
-    },{
-        'name': 'spread 2nd fertilizer',
-        'category': 'field',
-    },{
-        'name': 'forage',
-        'category': 'field',
-    },{
-        'name': 'post harvest weeding',
-        'category': 'field',
-    },{
-        'name': 'mow',
-        'category': 'grassland',
-    },{
-        'name': 'ted',
-        'category': 'grassland',
-    },{
-        'name': 'wind row/rake',
-        'category': 'grassland',
-    },{
-        'name': 'forage wagon',
-        'category': 'grassland',
-    },{
-        'name': 'roll',
-        'category': 'grassland',
-    },{
-        'name': 'bale',
-        'category': 'grassland',
-    },]
-    
-    for record in cropcalendars_data:
+@base_routes.post('/calendars', status_code=status.HTTP_201_CREATED, response_model=List[CropCalendar], tags=['Backend'])
+async def create_crop_calendars(data: List[CropCalendar]) -> List[CropCalendar]:    
+    calendars = []
+    for calendar in data:
         try:
-            calendar = CropCalendars(**record)
+            calendar = CropCalendars(**calendar.dict())
             calendar.save()
+            calendars.append(calendar)
         except Exception as e:
-            pass
+            raise HTTPException(
+                status_code=500, detail='duplicate calendar record found'
+            )
+    
+    return calendars
 
-    for record in worktasks_data:
+
+@base_routes.post('/worktasks', status_code=status.HTTP_201_CREATED, response_model=List[WorkTask], tags=['Backend'])
+async def create_work_tasks(data: List[WorkTask]) -> List[WorkTask]:    
+    worktasks = []
+    for worktask in data:
         try:
-            worktask = WorkTasks(**record)
+            worktask = WorkTasks(**worktask.dict())
             worktask.save()
-        except Exception as e:
-            pass
+            worktasks.append(worktask)
+        except:
+            raise HTTPException(
+                status_code=500, detail='duplicate work task record found'
+            )
+    
+    return worktasks

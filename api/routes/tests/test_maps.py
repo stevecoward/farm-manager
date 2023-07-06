@@ -9,7 +9,7 @@ client = TestClient(app, base_url='http://127.0.0.1:8000')
 
 
 def test_init_db():
-    response = client.get('/provision')
+    response = client.get('/backend/provision')
     assert response.status_code != 403
 
 
