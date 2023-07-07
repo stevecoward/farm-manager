@@ -17,7 +17,7 @@ class Farms(BaseModel):
 
 
 class Fields(BaseModel):
-    name = CharField(unique=True)
+    name = CharField()
     acreage = DoubleField()
     yield_potential = DoubleField()
     crop = TextField(choices=['wheat', 'barley', 'canola', 'oat', 'corn', 'sunflowers', 'soybeans', 'potatoes', 'sugar_beet', 'sugarcane', 'cotton', 'sorghum', 'grapes', 'olives', 'grass', 'oilseed_radish'])
@@ -26,6 +26,9 @@ class Fields(BaseModel):
     notes = CharField(null=True)
     precision_before = IntegerField(null=True)
     precision_after = IntegerField(null=True)
+
+    class Meta:
+        indexes = ((('name', 'farm'), True),)
 
 
 class CropCalendars(BaseModel):

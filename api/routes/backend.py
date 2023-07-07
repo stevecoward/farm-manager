@@ -15,15 +15,20 @@ from api.backend.schemas import CropCalendar, WorkTask
 base_routes = APIRouter(prefix=f'{route_prefix}/backend')
 
 
-@base_routes.get('/provision', include_in_schema=False)
-def provision_db():
+@base_routes.post('/provision', include_in_schema=False)
+async def provision_db():
     try:        
         db.connect()
         db.drop_tables([Farms, Fields, Workers, WorkerAssignments, WorkerFarms, WorkTasks, WorkOrders, GameConfig, CropCalendars, FieldYields, Maps])
-        db.create_tables([Farms, Fields, Workers, WorkerAssignments, WorkerFarms, WorkTasks, WorkOrders, GameConfig, CropCalendars, FieldYields, Maps])
+        db.create_tables([
+            Maps, Farms, CropCalendars, Fields,
+            Workers, WorkerAssignments, 
+            WorkerFarms, WorkTasks, WorkOrders, 
+            GameConfig, FieldYields
+        ])
     except Exception as e:
         raise HTTPException(
-            status_code=403, detail="failed to provision backend database"
+            status_code=403, detail=e
         )
 
 
