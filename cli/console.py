@@ -25,6 +25,19 @@ from commands.fields import *
 
 
 @cli_commands.command()
+@click.option('--name', '-n', type=str, prompt='Name')
+def create_map(name: str):
+    try:
+        response = runner.call('/maps', 'POST', 500, 'duplicate map name', payload={
+            'name': name
+        })
+        if response.status_code == 201:
+            print(f'Successfully created map \'{name}\'')
+    except Exception as e:
+        print(f'{e.detail} \'{name}\'')
+
+
+@cli_commands.command()
 def fields_by_farm() -> None:
     response = runner.call('/farms', 'GET', 400, 'could not retrieve farms')    
     FarmsTable(response.json(), print=True)
@@ -43,10 +56,13 @@ def create_worker(name: str, role: str) -> None:
     action = 'create'
     worker_id = None
 
-    response = runner.call(f'/workers/name/{name}', 'GET', 400, 'could not locate a worker with that name')   
-    if len([(k,v) for k, v in response.json().items() if v == name]) > 0: # type: ignore
-        action = 'associate'
-    worker_id = response.json()['id'] # type: ignore
+    try:
+        response = runner.call(f'/workers/name/{name}', 'GET', 400, 'could not locate a worker with that name')   
+        if len([(k,v) for k, v in response.json().items() if v == name]) > 0: # type: ignore
+            action = 'associate'
+        worker_id = response.json()['id'] # type: ignore
+    except:
+        pass
     
 
     response = runner.call('/farms', 'GET', 400, 'could not retrieve farms')    
@@ -158,26 +174,6 @@ def complete_assignment(assignment_id: int):
 def get_orders():
     response = runner.call(f'/orders', 'GET', 500, 'failed to mark assignment completed')
     WorkOrdersTable(response.json(), print=True)
-
-
-@cli_commands.command()
-@click.option('--provision', '-p', is_flag=True, default=False)
-@click.option('--calendars', '-c', type=click.Path(exists=True, readable=True), default=None)
-@click.option('--worktasks', '-w', type=click.Path(exists=True, readable=True), default=None)
-def bootstrap(provision: bool, calendars=None, worktasks=None):
-    contents = ''
-
-    if provision:
-        runner.call('/backend/provision', 'POST', 500, 'unable to provision database')
-    
-    if calendars:
-        with open(calendars, 'r') as fh:
-            contents = json.loads(fh.read())
-        runner.call('/backend/calendars', 'POST', 500, 'unable to bootstrap crop calendars', payload=contents)
-    if worktasks:
-        with open(worktasks, 'r') as fh:
-            contents = json.loads(fh.read())
-        runner.call('/backend/worktasks', 'POST', 500, 'unable to bootstrap work tasks', payload=contents)
 
 
 if __name__ == '__main__':

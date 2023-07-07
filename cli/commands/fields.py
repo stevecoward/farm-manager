@@ -15,7 +15,7 @@ def get_fields():
         FarmFieldsTable(response.json(), print=True)
 
 
-@entry_fields.command()
+# @entry_fields.command()
 @click.argument('id')
 def get_field_by_id(id: int):
     response = runner.call(f'/fields/{id}', 'GET', 400, 'unable to locate field')    
@@ -23,7 +23,7 @@ def get_field_by_id(id: int):
         FarmFieldsTable(response.json(), print=True)
 
 
-@entry_fields.command()
+# @entry_fields.command()
 @click.argument('id')
 @click.argument('farm_id')
 @click.option('--size', '-s', type=float)

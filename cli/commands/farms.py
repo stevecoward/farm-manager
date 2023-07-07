@@ -17,7 +17,7 @@ def get_farms() -> Union[Response, None]:
         FarmsTable(response.json(), print=True)
 
 
-@entry_farms.command()
+# @entry_farms.command()
 @click.argument('farm_id')
 def get_farm_by_id(farm_id: int):
     response = runner.call(f'/farms/{farm_id}', 'GET', 400, 'unable to locate farm')
@@ -50,7 +50,7 @@ def create_farm(name: str):
         FarmsTable(response.json(), print=True)
 
 
-@entry_farms.command()
+# @entry_farms.command()
 @click.argument('farm_id')
 @click.option('--name', '-n', prompt='Farm Name')
 def update_farm(farm_id: int, name: str):
