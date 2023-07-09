@@ -64,6 +64,7 @@ class WorkTasks(BaseModel):
                                     'transport', 'transport_auger'
                                    ])
     category = TextField(choices=['field', 'grassland', 'production', 'animal'])
+    group = TextField(choices=['pre_sow', 'sow', 'post_sow', 'harvest', 'post_harvest'])
 
 
 class WorkOrders(BaseModel):

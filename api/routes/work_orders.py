@@ -75,6 +75,64 @@ async def generate_assignments_for_work_order(id: int) -> None:
         )
 
 
+class CalendarAssignments():
+    def __init__(self, field_id: int, field_crop: str, calendars: CropCalendars, assignments: WorkerAssignments) -> None:
+        self.field_id = field_id
+        self.field_crop = field_crop
+        self.calendars = {
+            'sow_start': calendars.sow_start,
+            'sow_end': calendars.sow_end,
+            'harvest_start': calendars.harvest_start,
+            'harvest_end': calendars.harvest_end,
+            'forage_start': (calendars.harvest_start - 1),
+            'forage_end': (calendars.harvest_end - 1)
+        }
+        self.forage_months = [3, 5, 7, 9, 11]
+        self.assignments = assignments
+    
+
+    def check_completed_assignments_by_month(self, assignment: WorkTasks):
+        for month in self.forage_months:
+            results = WorkerAssignments.select()\
+                .where(WorkerAssignments.completed == 0)\
+                .where(WorkerAssignments.month_assigned == month)\
+                .where(WorkerAssignments.task_id == assignment.task_id)
+            if results.count() == 0:
+                assignment.month_assigned = month
+                assignment.save()
+                return
+
+
+    def calculate_for_grassland(self):
+        for assignment in self.assignments:
+            self.check_completed_assignments_by_month(assignment)
+
+
+    def calculate_for_field(self):
+            tasks = WorkTasks.select()
+            for assignment in self.assignments:
+                if assignment.task.group == 'pre_sow':
+                    assignment.month_assigned = self.calendars['sow_start'] - 1
+                elif assignment.task.group == 'sow':
+                    assignment.month_assigned = self.calendars['sow']
+                elif assignment.task.group == 'post_sow':
+                    assignment.month_assigned = self.calendars['sow_start'] + 1
+                elif assignment.task.group == 'forage':
+                    assignment.month_assigned = self.calendars['forage_start']
+                elif assignment.task.group == 'harvest':
+                    assignment.month_assigned = self.calendars['harvest_start']
+                elif assignment.task.group == 'post_harvest':
+                    assignment.month_assigned = self.calendars['harvest_end']
+                assignment.save()
+
+
+    def generate(self):
+        if self.field_crop == 'grass':
+            self.calculate_for_grassland()
+        else:
+            self.calculate_for_field()
+
+
 @work_order_routes.put('/{id}/plan', status_code=status.HTTP_204_NO_CONTENT, tags=['Work Orders'])
 async def generate_work_assignment_plan(id: int) -> None:
     order = WorkOrders.select().where(WorkOrders.id == id).get_or_none() # type: ignore
@@ -95,40 +153,9 @@ async def generate_work_assignment_plan(id: int) -> None:
             .where(WorkOrders.field_id == field_id)\
             .where(WorkerAssignments.completed == 0)
         return exists_for_assigned_month.count() > 0
-
-    if order.field.crop == 'grass':
-        for assignment in assignments:
-            if assignment.task.name in ['sow', 'roll', 'spread 1st fertilizer']:
-                assignment.month_assigned = calendars.sow_start
-            elif 'lime' in assignment.task.name:
-                assignment.month_assigned = calendars.sow_end + 1
-            
-            if assignment.task.category == 'grassland' or '2nd fertilizer' in assignment.task.name:
-                for month in [calendars.sow_start + 2, calendars.sow_start + 4, calendars.sow_start + 6, calendars.sow_start + 8]:
-                    exists = check_existing(order.field_id, assignment.task_id, month)
-                    if not exists:
-                        assignment.month_assigned = month
-                        break
-            
-            assignment.save()
-    else:
-        for assignment in assignments:        
-            if assignment.task.name == 'sow' or assignment.task.name == 'roll' or '2nd fertilizer' in assignment.task.name:
-                assignment.month_assigned = calendars.sow_start
-            elif 'sow weeding' in assignment.task.name:
-                assignment.month_assigned = calendars.sow_start + 1
-            elif 'lime' in assignment.task.name:
-                assignment.month_assigned = calendars.harvest_end + 1
-            elif 'harvest' in assignment.task.name:
-                assignment.month_assigned = calendars.harvest_start
-            elif '1st fertilizer' in assignment.task.name:
-                assignment.month_assigned = calendars.harvest_start + 1
-            elif 'harvest weeding' in assignment.task.name or 'till' in assignment.task.name:
-                assignment.month_assigned = calendars.harvest_start + 1
-            elif 'forage' in assignment.task.name:
-                assignment.month_assigned = calendars.harvest_start - 1
-
-            assignment.save()    
+    
+    calendar_assignments = CalendarAssignments(order.field_id, order.field.crop, calendars, assignments)
+    calendar_assignments.generate()
 
 
 @work_order_routes.put('/{id}/complete', status_code=status.HTTP_204_NO_CONTENT, tags=['Work Orders'])
